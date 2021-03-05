@@ -1,13 +1,54 @@
 import robocode.*;
 import standardOdometer.Odometer;
+
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
+
 import static robocode.util.Utils.normalRelativeAngleDegrees;
 
 public class CircumNav extends AdvancedRobot {
     private final Odometer odometer = new Odometer("IsRacing", this);
+    private final Odom ourOdometer = new Odom("isRunning", this, new Point2D.Double(18,18));
+    boolean starting=true;
+    boolean testRun=false;
+
+    ArrayList<Point2D> orderedScannedRobots;
 
 
     public void run() {
-        goTo(18,18);
+        addCustomEvent(odometer);
+
+        addCustomEvent(ourOdometer);
+        while(starting){
+            goTo(18,18);
+            turnRight(360-getHeading());
+            if (euclidianDistance(18,18,getX(),getY())<1)
+                starting=false;
+        }
+        testRun= true;
+        System.out.println("Ready to start!");
+        turnRadarRight(90);
+        for(int i =0; i<30;i++){
+            turnRight(45);
+            ahead(100);
+        }
+
+
+
+        while(testRun){
+            goTo(18,18);
+            turnRight(360-getHeading());
+            if (euclidianDistance(18,18,getX(),getY())<1)
+                testRun=false;
+        }
+
+
+    }
+
+
+    public void onScannedRobot(ScannedRobotEvent e) {
+
+        //orderedScannedRobots.add(e.getHeading())
     }
 
 
@@ -24,7 +65,7 @@ public class CircumNav extends AdvancedRobot {
         turnLeft(normalRelativeAngleDegrees(turningAngle + getHeading()));
 
         ahead(dist);
-        turnRight(360-getHeading());
+
     }
 
     // calculates the complementary angle aka the arc cosine of an angle
@@ -49,13 +90,24 @@ public class CircumNav extends AdvancedRobot {
         return dist;
     }
 
-    public void onScannedRobot(ScannedRobotEvent e) {
-        fire(1);
+
+
+    @Override
+    public void onHitRobot(HitRobotEvent event) {
+
+    }
+
+    @Override
+    public void onHitWall(HitWallEvent event) {
+        stop();
     }
 
     public void onCustomEvent(CustomEvent ev) {
         Condition cd = ev.getCondition();
         if (cd.getName().equals("IsRacing"))
             this.odometer.getRaceDistance();
+        if(cd.getName().equals("isRunning"))
+            testRun=this.ourOdometer.getDistance()>0;
+
     }
 }
