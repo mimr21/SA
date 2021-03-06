@@ -15,7 +15,6 @@ public class CircumNav extends AdvancedRobot {
 
     ArrayList<Map.Entry<String,Point2D>> orderedScannedRobots= new ArrayList<>();
 
-
     public void run() {
         addCustomEvent(ourOdometer);
         while(starting){
@@ -23,11 +22,14 @@ public class CircumNav extends AdvancedRobot {
             if (euclidianDistance(18,18,getX(),getY())<1)
                 starting=false;
         }
+
         normalizeHeading();
+
         int i=0;
         while(i<100){
             doNothing();
-            i++;}
+            i++;
+        }
 
         scanning=true;
         while (orderedScannedRobots.size()<3){
@@ -46,8 +48,7 @@ public class CircumNav extends AdvancedRobot {
             System.out.println("Dev :"+ deviation);
             goTo(to.getX(),to.getY(), -Math.ceil(deviation)-2,50);
         }
-
-            goTo(18,18);
+        goTo(18,18);
 
         System.out.println("DONE");
     }
@@ -56,19 +57,19 @@ public class CircumNav extends AdvancedRobot {
 
     public void onScannedRobot(ScannedRobotEvent e) {
         if(scanning){
-            //fire(1);
             int robotIndex = orderedScannedRobots.size();
 
             Point2D nme = getCartesianFromPolar(e.getBearing(), e.getDistance());
+
             if(robotIndex==1) nme = new Point2D.Double(nme.getX()+36,nme.getY()+36);
             System.out.println(nme+" :" + e.getName() +"@Angle: " +e.getBearing() );
+
             for(Map.Entry<String,Point2D> elem : orderedScannedRobots){
                 if (elem.getKey().equals(e.getName()))
                     return;
             }
             orderedScannedRobots.add(new AbstractMap.SimpleEntry<>(e.getName(), nme));
         }
-
     }
 
     private Point2D getCartesianFromPolar(double angle, double distance) {
@@ -82,48 +83,29 @@ public class CircumNav extends AdvancedRobot {
     void normalizeHeading(){
         turnLeft(getHeading());
     }
+
     void goTo(double toX, double toY){
         goTo(toX,toY,0,0);
     }
+
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
         double fromX = getX();
         double fromY = getY();
+
         double dist =  euclidianDistance(fromX, fromY, toX, toY);
         Point2D vec = new Point2D.Double(toX-fromX, toY-fromY);
+
         double atan = (180/Math.PI)*  normalRelativeAngle(Math.atan2(vec.getX(),vec.getY())-getHeadingRadians());
         System.out.println("Turning by: "+atan);
+
         turnRight(atan+ shiftAngle);
-
-            ahead(dist+shiftDistance);
-
-
-        //ahead(dist+ shiftDistance);
+        ahead(dist+shiftDistance);
     }
 
-    // calculates the complementary angle aka the arc cosine of an angle
-    /*
-    private static double getAngle(double fromX, double fromY, double toX, double toY){
-        // pythagoras theorem
-        double h = euclidianDistance(fromX, fromY, toX, toY);
-        double adj = euclidianDistance(fromX, fromY, fromX, toY);
-
-        double cosAlpha = adj/h;
-
-        // arc cosine aka inverse of cosine
-        double acosAlpha = java.lang.Math.acos(cosAlpha);
-
-        // transform to degrees
-        double acosAlphaDegrees = (180/java.lang.Math.PI)*acosAlpha;
-
-        return acosAlphaDegrees;
-    }
-*/
     private static double euclidianDistance(double x1, double y1, double x2, double y2) {
         double dist = java.lang.Math.sqrt(((java.lang.Math.pow((x1 - x2), 2)) + (java.lang.Math.pow((y1 - y2), 2))));
         return dist;
     }
-
-
 
     @Override
     public void onHitRobot(HitRobotEvent event) {
@@ -140,6 +122,5 @@ public class CircumNav extends AdvancedRobot {
         Condition cd = ev.getCondition();
         if(cd.getName().equals("isRunning"))
             this.ourOdometer.getDistance();
-
     }
 }
