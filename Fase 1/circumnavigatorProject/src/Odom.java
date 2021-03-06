@@ -30,7 +30,7 @@ public class Odom extends Condition {
 
         }
         if(isRunning){
-            isFinished=  thisPoint.distance(goal)<0.5 && points.size()>50;
+            isFinished=  thisPoint.distance(goal)<0.5 && points.size()>50 && total>10;
             if(isFinished) isRunning=false;
             if(!points.isEmpty()){
                 Point2D lastPoint = points.get(points.size() - 1);
