@@ -1,8 +1,11 @@
 import robocode.*;
 import standardOdometer.Odometer;
 
+import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Queue;
+import java.util.concurrent.SynchronousQueue;
 
 import static robocode.util.Utils.normalRelativeAngleDegrees;
 
@@ -10,9 +13,10 @@ public class CircumNav extends AdvancedRobot {
     private final Odometer odometer = new Odometer("IsRacing", this);
     private final Odom ourOdometer = new Odom("isRunning", this, new Point2D.Double(18,18));
     boolean starting=true;
-    boolean testRun=false;
+    boolean scanning=false;
+    boolean circumnavigating = false;
 
-    ArrayList<Point2D> orderedScannedRobots;
+    ArrayList<Point2D> orderedScannedRobots= new ArrayList<>();
 
 
     public void run() {
@@ -25,44 +29,65 @@ public class CircumNav extends AdvancedRobot {
             if (euclidianDistance(18,18,getX(),getY())<1)
                 starting=false;
         }
-        testRun= true;
-        System.out.println("Ready to start!");
+        scanning=true;
         turnRadarRight(90);
-        for(int i =0; i<30;i++){
-            turnRight(45);
-            ahead(100);
+        scanning=false; circumnavigating=true;
+        System.out.println("Ready to start!");
+
+        while (circumnavigating && !orderedScannedRobots.isEmpty()){
+            Point2D to = orderedScannedRobots.remove(0);
+            System.out.println("Goto: "+ to);
+            goTo(to.getX(),to.getY());
         }
 
 
+        System.out.println("DONE");
 
-        while(testRun){
-            goTo(18,18);
-            turnRight(360-getHeading());
-            if (euclidianDistance(18,18,getX(),getY())<1)
-                testRun=false;
-        }
+
 
 
     }
 
 
     public void onScannedRobot(ScannedRobotEvent e) {
+        if(scanning){
+            fire(1);
+            Point2D nme = getCartesianFromPolar(e.getBearing()+getHeading(), e.getDistance());
+            //System.out.println(nme+" :" + e.getName() +"@Angle: " +e.getBearing() );
+           orderedScannedRobots.add(nme);
+        }
+    }
 
-        //orderedScannedRobots.add(e.getHeading())
+    private Point2D getCartesianFromPolar(double angle, double distance) {
+        double rads = (java.lang.Math.PI/360)*angle;
+        double cos = Math.cos(rads)*distance;
+        double sin = Math.sin(rads)*distance;
+
+        Point2D pt =new Point2D.Double(sin,cos);
+
+        return pt;
+
+
+    }
+    void normalizeHeading(){
+        turnLeft(getHeading());
     }
 
 
     void goTo(double toX, double toY){
         double fromX = getX();
         double fromY = getY();
-        double dist =  euclidianDistance(getX(), fromY, toX, toY);
+        double dist =  euclidianDistance(fromX, fromY, toX, toY);
 
         // calculate the angle
         double complementaryAngle = getAngle(fromX, fromY, toX, toY);
         double turningAngle = 180-complementaryAngle;
 
+
         // Turn to initial position
-        turnLeft(normalRelativeAngleDegrees(turningAngle + getHeading()));
+        double nrad = normalRelativeAngleDegrees(turningAngle + getHeading());
+        System.out.println("Turning: "+nrad);
+        turnLeft(nrad);
 
         ahead(dist);
 
@@ -107,7 +132,7 @@ public class CircumNav extends AdvancedRobot {
         if (cd.getName().equals("IsRacing"))
             this.odometer.getRaceDistance();
         if(cd.getName().equals("isRunning"))
-            testRun=this.ourOdometer.getDistance()>0;
+            this.ourOdometer.getDistance();
 
     }
 }
