@@ -4,11 +4,13 @@ import java.awt.geom.Point2D;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Map;
+import standardOdometer.Odometer;
 
 import static robocode.util.Utils.normalRelativeAngle;
 
 public class CircumNav extends AdvancedRobot {
     private final Odom ourOdometer = new Odom("isRunning", this, new Point2D.Double(18,18));
+    private final Odometer stdOdometer = new Odometer("is_racing", this);
     boolean starting=true;
     boolean scanning=false;
     boolean circumnavigating = false;
@@ -38,6 +40,7 @@ public class CircumNav extends AdvancedRobot {
         scanning=false;
         circumnavigating=true;
         System.out.println("Ready to start!");
+        addCustomEvent(stdOdometer);
 
         while (circumnavigating && !orderedScannedRobots.isEmpty()){
             Map.Entry<String,Point2D> rbot=  orderedScannedRobots.remove(0);
@@ -122,5 +125,7 @@ public class CircumNav extends AdvancedRobot {
         Condition cd = ev.getCondition();
         if(cd.getName().equals("isRunning"))
             this.ourOdometer.getDistance();
+        if(cd.getName().equals("isRunning"))
+            this.stdOdometer.getRaceDistance();
     }
 }
