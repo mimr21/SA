@@ -1,11 +1,11 @@
 package teamWorkMakesTheDreamWork;
 
+import Utilities.Point;
 import robocode.Droid;
 import robocode.MessageEvent;
 import robocode.TeamRobot;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -14,18 +14,18 @@ import static robocode.util.Utils.normalRelativeAngleDegrees;
 
 
 public class teamPlayer extends TeamRobot implements Droid {
-    Queue<Point> danceRoutine = new LinkedList<>();
+    Queue<Utilities.Point> danceRoutine = new LinkedList<>();
     @Override
     public void run() {
         setBulletColor(Color.PINK);
 
-        danceRoutine.add(new Point(getX(),getY()));
+        danceRoutine.add(new Utilities.Point(getX(),getY()));
         while (true) {
             if (danceRoutine.isEmpty()){
                 System.out.println(danceRoutine + " :IsEmpty=" + danceRoutine.size());
             return;
         } else{
-                Point dest = danceRoutine.remove();
+                Utilities.Point dest = danceRoutine.remove();
                 goTo(dest);
             }
 
@@ -42,12 +42,12 @@ public class teamPlayer extends TeamRobot implements Droid {
             System.out.println("Received :"+obj[0]);
             switch ((String) obj[0]){
                 case "Dance":{
-                    Point p = (Point) obj[1];
+                    Utilities.Point p = (Utilities.Point) obj[1];
                     danceRoutine.add(p);
                     break;
                 }
                 case "Fire":{
-                    Point p = (Point) obj[1];
+                    Utilities.Point p = (Utilities.Point) obj[1];
                     turnGunRight(normalRelativeAngleDegrees(getAngle(p) - getGunHeading()));
                     fire(1);
                     break;
@@ -62,13 +62,12 @@ public class teamPlayer extends TeamRobot implements Droid {
             }
         }
         else{
-
             System.out.println("404");
         }
 
     }
 
-    double getAngle(Point p){
+    double getAngle(Utilities.Point p){
         double dx = p.getX() - this.getX();
         double dy = p.getY() - this.getY();
         // Calculate angle to target
@@ -81,7 +80,7 @@ public class teamPlayer extends TeamRobot implements Droid {
     void goTo(double toX, double toY){
         goTo(toX,toY,0,0);
     }
-    void goTo(Point p){
+    void goTo(Utilities.Point p){
         goTo(p.getX(),p.getY(),0,0);
     }
 
@@ -90,7 +89,7 @@ public class teamPlayer extends TeamRobot implements Droid {
         double fromY = getY();
 
         double dist =  euclidianDistance(fromX, fromY, toX, toY);
-        Point vec = new Point(toX-fromX, toY-fromY);
+        Utilities.Point vec = new Point(toX-fromX, toY-fromY);
 
         double atan = (180/Math.PI)*  normalRelativeAngle(Math.atan2(vec.getX(),vec.getY())-getHeadingRadians());
         System.out.println("Turning by: "+atan);

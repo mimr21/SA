@@ -1,4 +1,4 @@
-package teamWorkMakesTheDreamWork;
+package Protocol;
 
 import java.awt.*;
 import java.io.Serializable;

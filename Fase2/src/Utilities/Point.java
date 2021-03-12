@@ -1,4 +1,4 @@
-package teamWorkMakesTheDreamWork;
+package Utilities;
 
 
 import java.io.Serializable;
@@ -16,6 +16,11 @@ public class Point implements Serializable {
     public Point(Point p) {
         x=p.getX();
         y=p.getY();
+    }
+    public static Point toCartesian(Point from ,double dist, double heading){
+        double enemyX = from.getX() + dist * Math.sin(Math.toRadians(heading));
+        double enemyY = from.getY() + dist * Math.cos(Math.toRadians(heading));
+        return new Point(enemyX, enemyY);
     }
 
     public double getX() {
