@@ -40,8 +40,23 @@ public class Stella extends TeamRobot implements Droid {
             switch ((String) obj[0]){
                 case "Fire":{
                     Point p = (Point) obj[1];
-                    turnGunRight(normalRelativeAngleDegrees(t.getAngle(p, myHome, getHeadingRadians()) - getGunHeadingRadians()));
+                    /*
+                    double angle = t.getAngle(p, new Point(getX(),getY()), getGunHeading());
+                    // Turn gun to target
+                    turnGunRight(angle);
+                    fire(1);*/
+                    // Calculate x and y to target
+                    double dx = p.getX() - this.getX();
+                    double dy = p.getY() - this.getY();
+                    // Calculate angle to target
+                    double theta = Math.toDegrees(Math.atan2(dy, dx));
+
+                    // Turn gun to target
+                    double angle = t.getAngle(p, new Point(getX(), getY()), 0.0);
+                    turnGunRight(angle - getGunHeading());
                     fire(1);
+                    //double angle = e.getBearing()-getGunHeading()+getHeading();
+
                     break;
                 }
                 case "Move":{
@@ -66,6 +81,7 @@ public class Stella extends TeamRobot implements Droid {
         Point c = t.getBattleFieldDimensions();
         double center= t.getAngle(new Point(c.getX()/2,c.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
+        //turnGunRight(-getGunHeading());
     }
 
 

@@ -45,9 +45,9 @@ public class Tools {
         return new Point(p.getX()==0?pix : battleFieldWidth-pix, p.getY()==0?pix : battleFieldHeight-pix );
     }
 
-    public Point getRobotCoordinates(ScannedRobotEvent e){
-        Point p = getCartesianFromPolar(e.getBearing(), e.getDistance());
-        System.out.println(p+" :" + e.getName() +"@Angle: " +e.getBearing() );
+    public Point getRobotCoordinates(ScannedRobotEvent e, double x, double y, double h){
+        Point p = getCartesianFromPolar(e.getBearing()-h, e.getDistance()+euclidianDistance(x, y, 0, 0));
+        System.out.println(p+" :" + e.getName());
         return p;
     }
 

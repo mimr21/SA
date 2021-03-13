@@ -33,6 +33,7 @@ public class Bloom extends TeamRobot {
 
     private void stepInside() {
         turnRadarRight(360);
+        doNothing();
     }
 
     private Point flee() {
@@ -64,20 +65,24 @@ public class Bloom extends TeamRobot {
 
     public void onScannedRobot(ScannedRobotEvent e) {
         if(!isTeammate(e.getName())){
-            Point p = t.getRobotCoordinates(e);
-
-            Object[] msg = new Object[]{"Fire", p};
+            double enemyBearing = getHeading() + e.getBearing();
+            // Calculate enemy's position
+            double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
+            double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
+            System.out.println("Point: X " + enemyX + ", Y " + enemyY);
+            Object[] msg = new Object[]{"Fire", new Point(enemyX, enemyY)};
             try {
                 broadcastMessage(msg);
             } catch (IOException c) {
                 c.printStackTrace();
             }
 
-            /*
-            double angle = e.getBearing()-getGunHeading()+getHeading();
-            turnGunRight(angle);
+
+            //double angle = e.getBearing()-getGunHeading()+getHeading();
+            double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
+            turnGunRight(angle - getGunHeading());
             fire(1);
-            */
+
 
         }
     }
@@ -89,12 +94,16 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onHitRobot(HitRobotEvent event) {
-        back(25);
+        //goTo(getX()-75, getY()-75, 10, 0);
+        if(event.isMyFault()) {
+            back(30);
+            turnRight(30);
+            ahead(40);
+        }
     }
 
     @Override
     public void onHitWall(HitWallEvent event) {
-        back(25);
     }
 
     @Override
