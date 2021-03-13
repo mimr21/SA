@@ -12,9 +12,18 @@ import java.util.Random;
 import static robocode.util.Utils.normalRelativeAngle;
 
 public class Bloom extends TeamRobot {
-    Point myCorner;
+
+    private final ArrayList<Point> quadrants = new ArrayList<>(Arrays.asList(new Point(0,0), new Point(0,1),
+            new Point(1,1), new Point(1,0)));
+    private int myQuad;
+    private Point myHome;
+
 
     public void run() {
+        int xx =  getX()/getBattleFieldWidth()<0.5?0:1;
+        int yy = getY()/getBattleFieldHeight()<0.5?0:1;
+        Point myCorner= new Point(xx,yy); myHome = homeFromQuad(myCorner);
+        myQuad = quadrants.indexOf(myCorner);
         findCorner();
         while (true) {
             stepInside();
@@ -22,43 +31,24 @@ public class Bloom extends TeamRobot {
     }
 
     private void stepInside() {
-        for(int i=1;i<10;i++){
-           if(i%2==0)
-               turnRight(45/i);
-           else
-               turnLeft(45/i);
-            ahead(30);
-            if(i%2==1)
-                turnRight(45/i);
-            else
-                turnLeft(45/i);
-            turnRadarRight(45);
-            turnRadarLeft(90);
-            turnRadarRight(45);
-        }
+        turnRadarRight(360);
     }
-
+    private Point homeFromQuad(Point p){
+        return new Point(p.getX()==0?36 : getBattleFieldWidth()-36, p.getY()==0?36 : getBattleFieldHeight()-36 );
+    }
     private void findCorner() {
-        double dontHit = 36;
-        Point p = new Point(getBattleFieldHeight(),
-        getBattleFieldWidth());
-       boolean leftSide = (2*getX()/p.getX())<1;
-       boolean bottomSide =(2*getY()/p.getY())<1;
+        Point p = new Point(
+        getBattleFieldWidth(),getBattleFieldHeight());
+       boolean goLeft = new Random().nextBoolean();
+       if(goLeft)
+            myQuad=myQuad==0?3:myQuad-1;
+        else
+            myQuad=(myQuad+1)%4;
 
-        boolean goLeft = new Random().nextBoolean();
-       if(leftSide){
-           if(bottomSide)
-               myCorner= goLeft? new Point(0+dontHit,p.getY()-dontHit) : new Point(p.getY()-dontHit,0+dontHit);
-           else
-               myCorner= goLeft? new Point(p.getY()-dontHit,0+dontHit) : new Point(0+dontHit,p.getY()-dontHit);
-            }else{
-           if(bottomSide)
-               myCorner= goLeft? new Point(0+dontHit,0+dontHit) : new Point(p.getY()-dontHit,p.getY()-dontHit);
-           else
-               myCorner= goLeft? new Point(p.getY()-dontHit,0+dontHit) : new Point(0+dontHit,p.getY()-dontHit);
-       }
-       goTo(myCorner);
-       turnRight(-getHeading()+getAngle(new Point(p.getX()/2,p.getY()/2)));
+        myHome=homeFromQuad(quadrants.get(myQuad));
+        goTo(myHome);
+        double center=getAngle(new Point(p.getX()/2,p.getY()/2));
+        turnRight(center);
     }
 
     @Override
@@ -83,16 +73,16 @@ public class Bloom extends TeamRobot {
 
     public void onScannedRobot(ScannedRobotEvent e) {
         if(!isTeammate(e.getName())){
-            turnGunRight(getHeading()+getAngle(Point.toCartesian(new Point(getX(),getY()),e.getDistance(),e.getBearing())));
+            double angle = e.getBearing()-getGunHeading()+getHeading();
+            turnGunRight(angle);
             fire(1);
         }
     }
     double getAngle(Utilities.Point p){
         double dx = p.getX() - this.getX();
         double dy = p.getY() - this.getY();
-        // Calculate angle to target
-        return Math.toDegrees(Math.atan2(dx, dy));
 
+        return Math.toDegrees(normalRelativeAngle(Math.atan2(dx,dy)-getHeadingRadians()));
     }
 
     void goTo(double toX, double toY){
@@ -103,17 +93,18 @@ public class Bloom extends TeamRobot {
     }
 
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
-        double fromX =getX();
-        double fromY = getY();
+        while(euclidianDistance(getX(),getY(),toX,toY)>1) {
+            double fromX = getX();
+            double fromY = getY();
 
-        double dist =  euclidianDistance(fromX, fromY, toX, toY);
-        Utilities.Point vec = new Point(toX-fromX, toY-fromY);
+            double dist = euclidianDistance(fromX, fromY, toX, toY);
+            Utilities.Point vec = new Point(toX - fromX, toY - fromY);
 
-        double atan = (180/Math.PI)*  normalRelativeAngle(Math.atan2(vec.getX(),vec.getY())-getHeadingRadians());
-        System.out.println("Turning by: "+atan);
+            double atan = (180 / Math.PI) * normalRelativeAngle(Math.atan2(vec.getX(), vec.getY()) - getHeadingRadians());
 
-        turnRight(atan+ shiftAngle);
-        ahead(dist+shiftDistance);
+            turnRight(atan + shiftAngle);
+            ahead(dist + shiftDistance);
+        }
     }
     private static double euclidianDistance(double x1, double y1, double x2, double y2) {
         double dist = java.lang.Math.sqrt(((java.lang.Math.pow((x1 - x2), 2)) + (java.lang.Math.pow((y1 - y2), 2))));
