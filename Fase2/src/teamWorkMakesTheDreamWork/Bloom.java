@@ -6,7 +6,7 @@ import robocode.*;
 
 
 import java.io.IOException;
-import java.util.Random;
+import java.util.*;
 
 import static robocode.util.Utils.normalRelativeAngle;
 
@@ -14,9 +14,13 @@ public class Bloom extends TeamRobot {
     private int myQuad;
     private Point myHome;
     private Tools t = new Tools();
+    private ArrayList<String> teammates = new ArrayList<>();
 
-
+    //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
+        for(String s : getTeammates()){
+            teammates.add(s.split(" ")[0]);
+        }
         if(t.getBattleFieldDimensions().getX()!= getBattleFieldWidth())
              t.setDimensions(getBattleFieldWidth(), getBattleFieldHeight());
         int xx =  getX()/getBattleFieldWidth()<0.5?0:1;
@@ -33,9 +37,7 @@ public class Bloom extends TeamRobot {
 
     private void stepInside() {
         turnRadarRight(360);
-        doNothing();
     }
-
     private Point flee() {
         Point p = t.getBattleFieldDimensions();
         boolean goLeft = new Random().nextBoolean();
@@ -55,6 +57,7 @@ public class Bloom extends TeamRobot {
     }
 
     private void updateStella(int quad){
+        System.out.println("Move");
         Object[] msg = new Object[]{"Move", quad};
         try {
             broadcastMessage(msg);
@@ -64,12 +67,13 @@ public class Bloom extends TeamRobot {
     }
 
     public void onScannedRobot(ScannedRobotEvent e) {
-        if(!isTeammate(e.getName())){
+        if(isTeammate(e.getName()))
+            return;
             double enemyBearing = getHeading() + e.getBearing();
             // Calculate enemy's position
             double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
             double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
-            System.out.println("Point: X " + enemyX + ", Y " + enemyY);
+
             Object[] msg = new Object[]{"Fire", new Point(enemyX, enemyY)};
             try {
                 broadcastMessage(msg);
@@ -78,13 +82,21 @@ public class Bloom extends TeamRobot {
             }
 
 
+
+
             //double angle = e.getBearing()-getGunHeading()+getHeading();
             double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
             turnGunRight(angle - getGunHeading());
             fire(1);
 
 
-        }
+
+    }
+
+    @Override
+    public boolean isTeammate(String name) {
+
+        return teammates.contains(name);
     }
 
     @Override

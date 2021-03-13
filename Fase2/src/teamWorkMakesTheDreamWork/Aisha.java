@@ -1,5 +1,6 @@
 package teamWorkMakesTheDreamWork;
 
+import Utilities.AreWeThereYet;
 import Utilities.Point;
 import Utilities.Tools;
 import robocode.Droid;
@@ -12,24 +13,13 @@ import static robocode.util.Utils.normalRelativeAngle;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
 
 
-public class Stella extends TeamRobot implements Droid {
-    private int myQuad;
-    private Point myHome;
+public class Aisha extends TeamRobot implements Droid {
+
     Tools t = new Tools();
 
     @Override
     public void run() {
-        if(t.getBattleFieldDimensions().getX()!= getBattleFieldWidth())
-            t.setDimensions(getBattleFieldWidth(), getBattleFieldHeight());
-        setBulletColor(Color.PINK);
-        int xx = getX()/getBattleFieldWidth()<0.5?0:1;
-        int yy = getY()/getBattleFieldHeight()<0.5?0:1;
-        Point myCorner= new Point(xx,yy);
-        myHome = t.homeFromQuad(myCorner, 150);
-        myQuad = t.getMyQuad(myCorner);
-
-        System.out.println("Stella waiting");
-
+        System.out.println("Aisha waiting");
     }
 
     public void onMessageReceived(MessageEvent e) {
@@ -38,34 +28,24 @@ public class Stella extends TeamRobot implements Droid {
             System.out.println("Received :"+ (String) obj[0]);
             switch ((String) obj[0]){
                 case "Fire":{
+
                     Point p = (Point) obj[1];
-                    /*
-                    double angle = t.getAngle(p, new Point(getX(),getY()), getGunHeading());
-                    // Turn gun to target
-                    turnGunRight(angle);
-                    fire(1);*/
-                    // Calculate x and y to target
+                    setAhead(1000000);
                     double dx = p.getX() - this.getX();
                     double dy = p.getY() - this.getY();
                     // Calculate angle to target
                     double theta = Math.toDegrees(Math.atan2(dx, dy));
+                    setTurnRight(normalRelativeAngleDegrees(theta - getHeading()));
+                    setTurnLeft(90);
+                    setTurnRight(90);
+                    for(int i=0;i<100;i++){
+                        setFire(1);
+                    }
+                    execute();
 
-                    // Turn gun to target
-                    double angle = t.getAngle(p, new Point(getX(), getY()), 0.0);
-                    turnGunRight(normalRelativeAngleDegrees(theta - getGunHeading()));
-                    fire(3);
-                    //double angle = e.getBearing()-getGunHeading()+getHeading();
 
                     break;
                 }
-                case "Move":{
-                    System.out.println("Moving...");
-                    myQuad = (Integer) obj[1];
-                    myHome = t.homeFromQuad(t.getMyQuad(myQuad), 150);
-                    move();
-                    break;
-                }
-
             }
         }
         else{
@@ -74,14 +54,6 @@ public class Stella extends TeamRobot implements Droid {
 
     }
 
-    public void move(){
-        goTo(myHome);
-
-        Point c = t.getBattleFieldDimensions();
-        double center= t.getAngle(new Point(c.getX()/2,c.getY()/2),new Point(getX(),getY()), getHeadingRadians());
-        turnRight(center);
-        //turnGunRight(-getGunHeading());
-    }
 
 
     void goTo(double toX, double toY){

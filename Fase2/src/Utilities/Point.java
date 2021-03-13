@@ -61,4 +61,8 @@ public class Point implements Serializable {
     public int hashCode() {
         return Objects.hash(x, y);
     }
+
+    public double distance(Point point) {
+        return java.lang.Math.sqrt(((java.lang.Math.pow((point.getX() - x), 2)) + (java.lang.Math.pow((point.getY() - y), 2))));
+    }
 }
