@@ -22,7 +22,7 @@ public class Bloom extends TeamRobot {
         int xx =  getX()/getBattleFieldWidth()<0.5?0:1;
         int yy = getY()/getBattleFieldHeight()<0.5?0:1;
         Point myCorner= new Point(xx,yy);
-        myHome = t.homeFromQuad(myCorner);
+        myHome = t.homeFromQuad(myCorner,36);
         myQuad = t.getMyQuad(myCorner);
         flee();
 
@@ -43,43 +43,23 @@ public class Bloom extends TeamRobot {
         else
             myQuad=(myQuad+1)%4;
 
-        myHome = t.homeFromQuad(t.getMyQuad(myQuad));
+        myHome = t.homeFromQuad(t.getMyQuad(myQuad), 36);
 
-        updateStella(myHome,myQuad);
+        updateStella(myQuad);
 
         goTo(myHome);
-        double center= t.getAngle(new Point(p.getX()/2,p.getY()/2),new Point(getX(),getY()), getHeading());
+        double center= t.getAngle(new Point(p.getX()/2,p.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
         return myHome;
     }
 
-    private void updateStella(Point p, int quad){
-        Object[] msg = new Object[]{"Move", p, quad};
+    private void updateStella(int quad){
+        Object[] msg = new Object[]{"Move", quad};
         try {
             broadcastMessage(msg);
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void onMessageReceived(MessageEvent event) {
-        super.onMessageReceived(event);
-    }
-
-    @Override
-    public void onHitRobot(HitRobotEvent event) {
-            back(20);
-    }
-
-    @Override
-    public void onHitByBullet(HitByBulletEvent event) {
-        flee();
-    }
-
-    @Override
-    public void onHitWall(HitWallEvent event) {
-
     }
 
     public void onScannedRobot(ScannedRobotEvent e) {
@@ -102,6 +82,25 @@ public class Bloom extends TeamRobot {
         }
     }
 
+    @Override
+    public void onHitByBullet(HitByBulletEvent event) {
+        flee();
+    }
+
+    @Override
+    public void onHitRobot(HitRobotEvent event) {
+        back(25);
+    }
+
+    @Override
+    public void onHitWall(HitWallEvent event) {
+        back(25);
+    }
+
+    @Override
+    public void onMessageReceived(MessageEvent event) {
+        super.onMessageReceived(event);
+    }
 
     void goTo(double toX, double toY){
         goTo(toX,toY,0,0);

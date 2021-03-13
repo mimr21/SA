@@ -30,12 +30,19 @@ public class Tools {
         return quadrants.get(q);
     }
 
+    public double getBattleFieldWidth() {
+        return battleFieldWidth;
+    }
+    public double getBattleFieldHeight() {
+        return battleFieldHeight;
+    }
+
     public Point getBattleFieldDimensions(){
         return new Point(battleFieldWidth, battleFieldHeight);
     }
 
-    public Point homeFromQuad(Point p){
-        return new Point(p.getX()==0?36 : battleFieldWidth-36, p.getY()==0?36 : battleFieldHeight-36 );
+    public Point homeFromQuad(Point p, int pix){
+        return new Point(p.getX()==0?pix : battleFieldWidth-pix, p.getY()==0?pix : battleFieldHeight-pix );
     }
 
     public Point getRobotCoordinates(ScannedRobotEvent e){
@@ -44,12 +51,14 @@ public class Tools {
         return p;
     }
 
+    // Heading em radianos!
     public double getAngle(Point p, Point me, Double heading ){
         double dx = p.getX() - me.getX();
         double dy = p.getY() - me.getY();
 
         return Math.toDegrees(normalRelativeAngle(Math.atan2(dx,dy)-heading));
     }
+
     public Point getCartesianFromPolar(double angle, double distance) {
         double rads = (java.lang.Math.PI/180)*angle;
         double cos = Math.cos(rads)*distance;
@@ -57,7 +66,6 @@ public class Tools {
         return new Point(sin,cos);
 
     }
-
 
     public static double euclidianDistance(double x1, double y1, double x2, double y2) {
         return java.lang.Math.sqrt(((java.lang.Math.pow((x1 - x2), 2)) + (java.lang.Math.pow((y1 - y2), 2))));

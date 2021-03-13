@@ -3,7 +3,6 @@ package teamWorkMakesTheDreamWork;
 import Utilities.Point;
 import Utilities.Tools;
 import robocode.Droid;
-import robocode.HitRobotEvent;
 import robocode.MessageEvent;
 import robocode.TeamRobot;
 
@@ -26,7 +25,7 @@ public class Stella extends TeamRobot implements Droid {
         int xx = getX()/getBattleFieldWidth()<0.5?0:1;
         int yy = getY()/getBattleFieldHeight()<0.5?0:1;
         Point myCorner= new Point(xx,yy);
-        myHome = t.homeFromQuad(myCorner);
+        myHome = t.homeFromQuad(myCorner, 150);
         myQuad = t.getMyQuad(myCorner);
 
         System.out.println("Stella waiting");
@@ -41,15 +40,14 @@ public class Stella extends TeamRobot implements Droid {
             switch ((String) obj[0]){
                 case "Fire":{
                     Point p = (Point) obj[1];
-                    turnGunRight(normalRelativeAngleDegrees(t.getAngle(p, new Point(getX(),getY()), getHeading()) - getGunHeading()));
+                    turnGunRight(normalRelativeAngleDegrees(t.getAngle(p, myHome, getHeadingRadians()) - getGunHeadingRadians()));
                     fire(1);
                     break;
                 }
                 case "Move":{
                     System.out.println("Moving...");
-                    myHome = (Point) obj[1];
-                    myQuad = (Integer) obj[2];
-
+                    myQuad = (Integer) obj[1];
+                    myHome = t.homeFromQuad(t.getMyQuad(myQuad), 150);
                     move();
                     break;
                 }
@@ -66,10 +64,10 @@ public class Stella extends TeamRobot implements Droid {
         goTo(myHome);
 
         Point c = t.getBattleFieldDimensions();
-        double center= t.getAngle(new Point(c.getX()/2,c.getY()/2),new Point(getX(),getY()), getHeading());
+        double center= t.getAngle(new Point(c.getX()/2,c.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
     }
-    
+
 
     void goTo(double toX, double toY){
         goTo(toX,toY,0,0);
