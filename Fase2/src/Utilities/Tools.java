@@ -42,7 +42,7 @@ public class Tools {
     }
 
     public Point homeFromQuad(Point p, int pix){
-        return new Point(p.getX()==0?pix : battleFieldWidth-pix, p.getY()==0?pix : battleFieldHeight-pix );
+        return new Point(p.getX()==0? pix : battleFieldWidth-pix, p.getY()==0? pix : battleFieldHeight-pix );
     }
 
     public Point getRobotCoordinates(ScannedRobotEvent e, double x, double y, double h){

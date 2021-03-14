@@ -1,12 +1,12 @@
 package teamWorkMakesTheDreamWork;
 
+import Utilities.Dying;
 import Utilities.Point;
 import Utilities.Tools;
-import robocode.Droid;
-import robocode.MessageEvent;
-import robocode.TeamRobot;
+import robocode.*;
 
 import java.awt.*;
+import java.io.IOException;
 
 import static robocode.util.Utils.normalRelativeAngle;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
@@ -19,6 +19,7 @@ public class Stella extends TeamRobot implements Droid {
 
     @Override
     public void run() {
+        addCustomEvent(new Dying("isDying", this, getEnergy()));
         if(t.getBattleFieldDimensions().getX()!= getBattleFieldWidth())
             t.setDimensions(getBattleFieldWidth(), getBattleFieldHeight());
         setBulletColor(Color.PINK);
@@ -27,9 +28,7 @@ public class Stella extends TeamRobot implements Droid {
         Point myCorner= new Point(xx,yy);
         myHome = t.homeFromQuad(myCorner, 150);
         myQuad = t.getMyQuad(myCorner);
-
         System.out.println("Stella waiting");
-
     }
 
     public void onMessageReceived(MessageEvent e) {
@@ -39,12 +38,6 @@ public class Stella extends TeamRobot implements Droid {
             switch ((String) obj[0]){
                 case "Fire":{
                     Point p = (Point) obj[1];
-                    /*
-                    double angle = t.getAngle(p, new Point(getX(),getY()), getGunHeading());
-                    // Turn gun to target
-                    turnGunRight(angle);
-                    fire(1);*/
-                    // Calculate x and y to target
                     double dx = p.getX() - this.getX();
                     double dy = p.getY() - this.getY();
                     // Calculate angle to target
@@ -55,7 +48,6 @@ public class Stella extends TeamRobot implements Droid {
                     turnGunRight(normalRelativeAngleDegrees(theta - getGunHeading()));
                     fire(3);
                     //double angle = e.getBearing()-getGunHeading()+getHeading();
-
                     break;
                 }
                 case "Move":{
@@ -74,9 +66,10 @@ public class Stella extends TeamRobot implements Droid {
 
     }
 
+
+
     public void move(){
         goTo(myHome);
-
         Point c = t.getBattleFieldDimensions();
         double center= t.getAngle(new Point(c.getX()/2,c.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
@@ -105,6 +98,19 @@ public class Stella extends TeamRobot implements Droid {
         }
     }
 
-
-
+    @Override
+    public void onCustomEvent(CustomEvent event) {
+       Condition c = event.getCondition();
+       switch (c.getName()){
+           case "isDying":
+               if(c.test()) {
+                   try {
+                       broadcastMessage(new Object[]{"Death", getName()});
+                   } catch (IOException e) {
+                       e.printStackTrace();
+                   }
+               }
+               break;
+       }
+    }
 }

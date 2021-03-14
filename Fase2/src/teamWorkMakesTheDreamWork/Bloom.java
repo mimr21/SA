@@ -1,5 +1,6 @@
 package teamWorkMakesTheDreamWork;
 
+import Utilities.AreWeThereYet;
 import Utilities.Point;
 import Utilities.Tools;
 import robocode.*;
@@ -9,15 +10,23 @@ import java.io.IOException;
 import java.util.*;
 
 import static robocode.util.Utils.normalRelativeAngle;
+import static robocode.util.Utils.normalRelativeAngleDegrees;
 
 public class Bloom extends TeamRobot {
     private int myQuad;
     private Point myHome;
     private Tools t = new Tools();
     private ArrayList<String> teammates = new ArrayList<>();
+    private boolean moving;
+    private double bound;
+    private boolean noTanks=false;
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
+        double r = Math.ceil(Math.sqrt(2*Math.pow(38,2)));
+        Point to = t.homeFromQuad(t.getMyQuad(myQuad),150);
+        bound = Math.toDegrees(Math.asin(r/t.euclidianDistance(getX(),getY(),to.getX(),to.getY())));
+
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
         }
@@ -29,16 +38,17 @@ public class Bloom extends TeamRobot {
         myHome = t.homeFromQuad(myCorner,36);
         myQuad = t.getMyQuad(myCorner);
         flee();
-
         while (true) {
-            stepInside();
+            turnRadarRight(normalRelativeAngleDegrees(-getRadarHeading()+getGunHeading()));
+            turnRadarRight(50);
+            turnRadarRight(-100);
+            turnRadarRight(50);
         }
     }
 
-    private void stepInside() {
-        turnRadarRight(360);
-    }
+
     private Point flee() {
+        moving=true;
         Point p = t.getBattleFieldDimensions();
         boolean goLeft = new Random().nextBoolean();
         if(goLeft)
@@ -53,6 +63,8 @@ public class Bloom extends TeamRobot {
         goTo(myHome);
         double center= t.getAngle(new Point(p.getX()/2,p.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
+        waitFor(new AreWeThereYet(this,myHome));
+        moving=false;
         return myHome;
     }
 
@@ -80,16 +92,11 @@ public class Bloom extends TeamRobot {
             } catch (IOException c) {
                 c.printStackTrace();
             }
-
-
-
-
-            //double angle = e.getBearing()-getGunHeading()+getHeading();
             double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
-            turnGunRight(angle - getGunHeading());
-            fire(1);
-
-
+            if(Math.abs(angle-getGunHeading())>bound || noTanks){
+                turnGunRight(normalRelativeAngleDegrees(angle - getGunHeading()));
+                fire(1);
+            }
 
     }
 
@@ -101,6 +108,7 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onHitByBullet(HitByBulletEvent event) {
+        if(!moving)
         flee();
     }
 
@@ -120,7 +128,10 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onMessageReceived(MessageEvent event) {
-        super.onMessageReceived(event);
+        Object[] msg =(Object[]) event.getMessage();
+        switch ((String) msg[0]){
+            case "Death": noTanks=true;
+        }
     }
 
     void goTo(double toX, double toY){
