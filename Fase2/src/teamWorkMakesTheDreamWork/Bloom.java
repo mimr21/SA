@@ -20,13 +20,13 @@ public class Bloom extends TeamRobot {
     private boolean moving;
     private double bound;
     private boolean noTanks=false;
+    private HashMap<String,Double> nmes= new HashMap<>();
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
-        double r = Math.ceil(Math.sqrt(2*Math.pow(38,2)));
+        double r = Math.ceil(Math.sqrt(2*Math.pow(45,2)));
         Point to = t.homeFromQuad(t.getMyQuad(myQuad),150);
         bound = Math.toDegrees(Math.asin(r/t.euclidianDistance(getX(),getY(),to.getX(),to.getY())));
-
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
         }
@@ -37,15 +37,37 @@ public class Bloom extends TeamRobot {
         Point myCorner= new Point(xx,yy);
         myHome = t.homeFromQuad(myCorner,36);
         myQuad = t.getMyQuad(myCorner);
+        turnRadarRight(360);
+        orderAishas();
         flee();
         while (true) {
-            turnRadarRight(normalRelativeAngleDegrees(-getRadarHeading()+getGunHeading()));
+            turnRadarRight(normalRelativeAngleDegrees(-getRadarHeading()+getHeading()));
             turnRadarRight(50);
             turnRadarRight(-100);
             turnRadarRight(50);
+            orderAishas();
+
+
         }
     }
 
+    private void orderAishas(){
+        double min=0;
+        String nameMin = "";
+        for (Map.Entry<String,Double> e : nmes.entrySet()){
+            if(e.getValue()>min){
+                min = e.getValue();
+                nameMin = e.getKey();
+            }
+        }
+        try {
+            broadcastMessage(new Object[]{"Kill", nameMin});
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 
     private Point flee() {
         moving=true;
@@ -64,6 +86,7 @@ public class Bloom extends TeamRobot {
         double center= t.getAngle(new Point(p.getX()/2,p.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
         waitFor(new AreWeThereYet(this,myHome));
+        turnGunRight(-getGunHeading()+getHeading());
         moving=false;
         return myHome;
     }
@@ -79,8 +102,9 @@ public class Bloom extends TeamRobot {
     }
 
     public void onScannedRobot(ScannedRobotEvent e) {
-        if(isTeammate(e.getName()))
+        if(isTeammate(e.getName().split(" ")[0]))
             return;
+            nmes.put(e.getName(),e.getEnergy());
             double enemyBearing = getHeading() + e.getBearing();
             // Calculate enemy's position
             double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
@@ -93,8 +117,9 @@ public class Bloom extends TeamRobot {
                 c.printStackTrace();
             }
             double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
-            if(Math.abs(angle-getGunHeading())>bound || noTanks){
-                turnGunRight(normalRelativeAngleDegrees(angle - getGunHeading()));
+            if(Math.abs(angle-getHeading())>bound || noTanks){
+                System.out.println("Shooting :"+ e.getName());
+                turnGunRight(normalRelativeAngleDegrees(-getGunHeading()+angle));
                 fire(1);
             }
 
@@ -102,7 +127,6 @@ public class Bloom extends TeamRobot {
 
     @Override
     public boolean isTeammate(String name) {
-
         return teammates.contains(name);
     }
 
@@ -110,6 +134,13 @@ public class Bloom extends TeamRobot {
     public void onHitByBullet(HitByBulletEvent event) {
         if(!moving)
         flee();
+    }
+
+    @Override
+    public void onRobotDeath(RobotDeathEvent event) {
+        if(nmes.containsKey(event.getName())) {
+            nmes.remove(event.getName());
+        }
     }
 
     @Override
@@ -124,6 +155,9 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onHitWall(HitWallEvent event) {
+        back(30);
+        turnRight(30);
+        ahead(40);
     }
 
     @Override

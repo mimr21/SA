@@ -15,6 +15,7 @@ import static robocode.util.Utils.normalRelativeAngleDegrees;
 public class Stella extends TeamRobot implements Droid {
     private int myQuad;
     private Point myHome;
+    private boolean inPlace=false;
     Tools t = new Tools();
 
     @Override
@@ -51,10 +52,12 @@ public class Stella extends TeamRobot implements Droid {
                     break;
                 }
                 case "Move":{
+                    inPlace=false;
                     System.out.println("Moving...");
                     myQuad = (Integer) obj[1];
                     myHome = t.homeFromQuad(t.getMyQuad(myQuad), 150);
                     move();
+                    inPlace=true;
                     break;
                 }
 
@@ -66,7 +69,23 @@ public class Stella extends TeamRobot implements Droid {
 
     }
 
+    public void onHitRobot(HitRobotEvent event) {
+        if(event.isMyFault()) {
+            System.out.println("Going Back");
+            if (!inPlace) {
 
+                back(40);
+                if ("teamWorkMakesTheDreamWork.Bloom".equals(event.getName().split(" ")[0])) {
+                    if (event.getBearing() > 0) {
+                        turnRight(-(90 - event.getBearing()));
+                    } else {
+                        turnRight(90 - event.getBearing());
+                    }
+                    ahead(40);
+                }
+            }
+        }
+    }
 
     public void move(){
         goTo(myHome);

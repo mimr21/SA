@@ -15,6 +15,6 @@ public class Dying extends Condition {
 
     @Override
     public boolean test() {
-        return (r.getEnergy()/maxNRG)<0.1;
+        return (r.getEnergy())<5;
     }
 }
