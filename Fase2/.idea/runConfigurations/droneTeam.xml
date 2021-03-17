@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="droneTeam" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="robocode.Robocode" />
+    <module name="Fase2" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

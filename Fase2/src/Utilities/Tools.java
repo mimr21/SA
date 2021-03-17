@@ -52,7 +52,7 @@ public class Tools {
     }
 
     // Heading em radianos!
-    public double getAngle(Point p, Point me, Double heading ){
+    public static double getAngle(Point p, Point me, Double heading ){
         double dx = p.getX() - me.getX();
         double dy = p.getY() - me.getY();
 

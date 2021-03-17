@@ -24,9 +24,7 @@ public class Bloom extends TeamRobot {
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
-        double r = Math.ceil(Math.sqrt(2*Math.pow(45,2)));
-        Point to = t.homeFromQuad(t.getMyQuad(myQuad),150);
-        bound = Math.toDegrees(Math.asin(r/t.euclidianDistance(getX(),getY(),to.getX(),to.getY())));
+
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
         }
@@ -37,6 +35,10 @@ public class Bloom extends TeamRobot {
         Point myCorner= new Point(xx,yy);
         myHome = t.homeFromQuad(myCorner,36);
         myQuad = t.getMyQuad(myCorner);
+        double r = Math.ceil(Math.sqrt(2*Math.pow(35,2)));
+        Point to = t.homeFromQuad(t.getMyQuad(myQuad),150);
+        Point from = t.homeFromQuad(t.getMyQuad(myQuad),36);
+        bound = Math.toDegrees(Math.asin(r/t.euclidianDistance(from.getX(),from.getY(),to.getX(),to.getY())));
         turnRadarRight(360);
         orderAishas();
         flee();
@@ -46,6 +48,7 @@ public class Bloom extends TeamRobot {
             turnRadarRight(-100);
             turnRadarRight(50);
             orderAishas();
+            setDebugProperty("isStellaDed", String.valueOf(noTanks));
 
 
         }
@@ -78,16 +81,18 @@ public class Bloom extends TeamRobot {
         else
             myQuad=(myQuad+1)%4;
 
+        updateStella(myQuad);
         myHome = t.homeFromQuad(t.getMyQuad(myQuad), 36);
 
-        updateStella(myQuad);
 
+        doNothing();
         goTo(myHome);
         double center= t.getAngle(new Point(p.getX()/2,p.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
         waitFor(new AreWeThereYet(this,myHome));
         turnGunRight(-getGunHeading()+getHeading());
         moving=false;
+
         return myHome;
     }
 
@@ -109,18 +114,22 @@ public class Bloom extends TeamRobot {
             // Calculate enemy's position
             double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
             double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
-
+        if(!moving) {
             Object[] msg = new Object[]{"Fire", new Point(enemyX, enemyY)};
             try {
                 broadcastMessage(msg);
             } catch (IOException c) {
                 c.printStackTrace();
             }
-            double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
-            if(Math.abs(angle-getHeading())>bound || noTanks){
-                System.out.println("Shooting :"+ e.getName());
-                turnGunRight(normalRelativeAngleDegrees(-getGunHeading()+angle));
-                fire(1);
+
+                double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
+                if (Math.abs( normalRelativeAngleDegrees(angle - getHeading())) > bound || noTanks) {
+                    setDebugProperty("AngleOffset", String.valueOf(Math.abs( normalRelativeAngleDegrees(angle - getHeading()))));
+                    setDebugProperty("OffsetAllowed", String.valueOf(bound));
+                    System.out.println("Shooting :" + e.getName());
+                    turnGunRight(normalRelativeAngleDegrees(-getGunHeading() + angle));
+                    fire(1);
+                }
             }
 
     }
@@ -132,8 +141,13 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onHitByBullet(HitByBulletEvent event) {
-        if(!moving)
-        flee();
+
+        if(!moving){
+            flee();
+            System.out.println("Moving");
+        }else{
+            System.out.println("Shouldt be moving");
+        }
     }
 
     @Override
@@ -163,8 +177,12 @@ public class Bloom extends TeamRobot {
     @Override
     public void onMessageReceived(MessageEvent event) {
         Object[] msg =(Object[]) event.getMessage();
+
         switch ((String) msg[0]){
-            case "Death": noTanks=true;
+            case "Death":
+                noTanks=true;
+                System.out.println("Stella Ded");
+                break;
         }
     }
 
