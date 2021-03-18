@@ -20,6 +20,7 @@ public class Bloom extends TeamRobot {
     private boolean moving;
     private double bound;
     private boolean noTanks=false;
+    private Point lastFire;
     private HashMap<String,Double> nmes= new HashMap<>();
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
@@ -40,6 +41,7 @@ public class Bloom extends TeamRobot {
         Point from = t.homeFromQuad(t.getMyQuad(myQuad),36);
         bound = Math.toDegrees(Math.asin(r/t.euclidianDistance(from.getX(),from.getY(),to.getX(),to.getY())));
         turnRadarRight(360);
+        updateStella(myQuad);
         orderAishas();
         flee();
         while (true) {
@@ -107,15 +109,19 @@ public class Bloom extends TeamRobot {
     }
 
     public void onScannedRobot(ScannedRobotEvent e) {
-        if(isTeammate(e.getName().split(" ")[0]))
+        if(!moving && "teamWorkMakesTheDreamWork.Stella".equals(e.getName().split(" ")[0])){
+            updateStella(myQuad);
             return;
+        }
             nmes.put(e.getName(),e.getEnergy());
             double enemyBearing = getHeading() + e.getBearing();
             // Calculate enemy's position
             double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
             double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
-        if(!moving) {
-            Object[] msg = new Object[]{"Fire", new Point(enemyX, enemyY)};
+            Point ppp = new Point(enemyX, enemyY);
+        if(!moving && !lastFire.equals(ppp)) {
+            lastFire=ppp;
+            Object[] msg = new Object[]{"Fire",ppp };
             try {
                 broadcastMessage(msg);
             } catch (IOException c) {

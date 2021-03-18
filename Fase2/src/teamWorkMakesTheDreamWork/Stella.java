@@ -1,14 +1,10 @@
 package teamWorkMakesTheDreamWork;
 
-import Utilities.AreWeThereYet;
-import Utilities.Dying;
 import Utilities.Point;
 import Utilities.Tools;
 import robocode.*;
 
 import java.awt.*;
-import java.io.IOException;
-import java.util.List;
 
 import static robocode.util.Utils.normalRelativeAngle;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
@@ -23,9 +19,6 @@ public class Stella extends TeamRobot implements Droid{
 
     @Override
     public void run() {
-        addCustomEvent(new JustFire("justFire", this));
-        addCustomEvent(new MessageReader("msgReader", this));
-        addCustomEvent(new Dying("isDying", this, getEnergy()));
         if(t.getBattleFieldDimensions().getX()!= getBattleFieldWidth())
             t.setDimensions(getBattleFieldWidth(), getBattleFieldHeight());
         setBulletColor(Color.PINK);
@@ -36,10 +29,16 @@ public class Stella extends TeamRobot implements Droid{
         myQuad = t.getMyQuad(myCorner);
         for(int i=0;i<10;i++)
         System.out.println("Stella waiting");
+        while (true){
+            if(myHome != null||myHome.equals(new Point(getX(),getY())))
+                goTo(myHome);
 
-
+            if(fireReady)
+                fire(2);
+            doNothing();
+        }
     }
-/*
+
     public void onMessageReceived(MessageEvent e) {
         if(e.getMessage() instanceof Object[]){
             Object[] obj =(Object[]) e.getMessage();
@@ -55,12 +54,13 @@ public class Stella extends TeamRobot implements Droid{
                     // Turn gun to target
                     double angle = t.getAngle(p, new Point(getX(), getY()), 0.0);
                     turnGunRight(normalRelativeAngleDegrees(theta - getGunHeading()));
-                    fire(3);
+                    fireReady=true;
                     //double angle = e.getBearing()-getGunHeading()+getHeading();
                     break;
                 }
                 case "Move":{
                     inPlace=false;
+                    fireReady=false;
                     System.out.println("Moving...");
                     myQuad = (Integer) obj[1];
                     myHome = t.homeFromQuad(t.getMyQuad(myQuad), 150);
@@ -76,18 +76,17 @@ public class Stella extends TeamRobot implements Droid{
         }
 
     }
-*/
-    public void onHitRobot(HitRobotEvent event) {
 
+    public void onHitRobot(HitRobotEvent e) {
 
-            if (!inPlace) {
-                back(40);
+            if(!inPlace) {
+                back(400);doNothing();
                 System.out.println("Going Back");
-                if ("teamWorkMakesTheDreamWork.Bloom".equals(event.getName().split(" ")[0])) {
-                    if (event.getBearing() > 0) {
-                        turnRight(-(90 - event.getBearing()));
+                if ("teamWorkMakesTheDreamWork.Bloom".equals(e.getName().split(" ")[0])) {
+                    if (e.getBearing() > 0) {
+                        turnRight(-(90 - e.getBearing()));
                     } else {
-                        turnRight(90 - event.getBearing());
+                        turnRight(90 - e.getBearing());
                     }
                     ahead(40);
                 }
@@ -111,42 +110,17 @@ public class Stella extends TeamRobot implements Droid{
         goTo(p.getX(),p.getY(),0,0);
     }
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
-        while(t.euclidianDistance(getX(),getY(),toX,toY)>1) {
             double fromX = getX();
             double fromY = getY();
-
             double dist = t.euclidianDistance(fromX, fromY, toX, toY);
             Point vec = new Point(toX - fromX, toY - fromY);
 
             double atan = (180 / Math.PI) * normalRelativeAngle(Math.atan2(vec.getX(), vec.getY()) - getHeadingRadians());
 
             turnRight(atan + shiftAngle);
+            System.out.println("BeforeGOTO");
             ahead(dist + shiftDistance);
-        }
-    }
 
-    @Override
-    public void onCustomEvent(CustomEvent event) {
-       Condition c = event.getCondition();
-       switch (c.getName()){
-           case "isDying":{
-               if(c.test()) {
-                   System.out.println("ImDED");
-                   try {
-                       broadcastMessage(new Object[]{"Death", getName()});
-                   } catch (IOException e) {
-                       e.printStackTrace();
-                   }
-               }
-               break;
-           }
-           case "msgReader":{
-               ((MessageReader) c).funct();
-               break;
-           }
-
-
-       }
     }
 
     public class JustFire extends Condition {
@@ -165,7 +139,7 @@ public class Stella extends TeamRobot implements Droid{
             return true;
         }
     }
-
+/*
     public class MessageReader extends Condition {
         private final Stella r;
 
@@ -223,5 +197,5 @@ public class Stella extends TeamRobot implements Droid{
     private void turnGunBy(double normalRelativeAngleDegrees) {
         turnGunRight(normalRelativeAngleDegrees);
     }
-
+*/
 }
