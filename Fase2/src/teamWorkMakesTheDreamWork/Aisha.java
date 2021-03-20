@@ -18,6 +18,7 @@ public class Aisha extends TeamRobot {
     private Point targetPos;
     Tools t = new Tools();
     private ArrayList<String> teammates =  new ArrayList<>();
+    private boolean dontFire=false;
 
     @Override
     public void run() {
@@ -65,9 +66,14 @@ public class Aisha extends TeamRobot {
             double enemyX = getX() + event.getDistance() * Math.sin(Math.toRadians(enemyBearing));
             double enemyY = getY() + event.getDistance() * Math.cos(Math.toRadians(enemyBearing));
             targetPos = new Point(enemyX,enemyY);
+            dontFire=false;
         }
+
         if(isTeammate(event.getName())){
-            if(event.getDistance()<10){
+            dontFire = true;
+
+            if(event.getDistance()<60){
+                System.out.println("Avoiding Teammate");
                 back(30);
                 turnRight(30);
                 ahead(40);
@@ -86,8 +92,7 @@ public class Aisha extends TeamRobot {
     @Override
     public void onHitWall(HitWallEvent event) {
         back(30);
-        turnRight(30);
-        ahead(40);
+        turnRight(180);
     }
 
     @Override
@@ -128,7 +133,8 @@ public class Aisha extends TeamRobot {
             turnRadarRight(-getRadarHeading()+getHeading());
             setTurnRadarRight(360);
             setAhead(dist + shiftDistance);
-            setFire(2);
+            if(!dontFire)
+                setFire(dist>300? 1 : (dist>100? 2 : 3));
             execute();
         }
     }

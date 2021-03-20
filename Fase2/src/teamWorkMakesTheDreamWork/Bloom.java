@@ -17,11 +17,12 @@ public class Bloom extends TeamRobot {
     private Point myHome;
     private Tools t = new Tools();
     private ArrayList<String> teammates = new ArrayList<>();
-    private boolean moving;
+    private boolean moving=true;
     private double bound;
     private boolean noTanks=false;
     private Point lastFire;
     private HashMap<String,Double> nmes= new HashMap<>();
+    private int messageCounter=0;
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
@@ -40,8 +41,8 @@ public class Bloom extends TeamRobot {
         Point to = t.homeFromQuad(t.getMyQuad(myQuad),150);
         Point from = t.homeFromQuad(t.getMyQuad(myQuad),36);
         bound = Math.toDegrees(Math.asin(r/t.euclidianDistance(from.getX(),from.getY(),to.getX(),to.getY())));
-        turnRadarRight(360);
         updateStella(myQuad);
+        turnRadarRight(360);
         orderAishas();
         flee();
         while (true) {
@@ -98,10 +99,14 @@ public class Bloom extends TeamRobot {
 
     private void updateStella(int quad){
         System.out.println("Move");
-        Object[] msg = new Object[]{"Move", quad};
         try {
-            for(int i=0;i<7;i++)
-                broadcastMessage(msg);
+
+                broadcastMessage(new Object[]{"Move", quad ,messageCounter });
+                messageCounter++;
+            setDebugProperty("messageCounter", String.valueOf(messageCounter));
+
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -135,6 +140,7 @@ public class Bloom extends TeamRobot {
                     System.out.println("Shooting :" + e.getName());
                     turnGunRight(normalRelativeAngleDegrees(-getGunHeading() + angle));
                     fire(1);
+                    waitFor(new GunTurnCompleteCondition(this));
                 }
             }
         }
@@ -148,12 +154,9 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onHitByBullet(HitByBulletEvent event) {
-
         if(!moving){
             flee();
             System.out.println("Moving");
-        }else{
-            System.out.println("Shouldt be moving");
         }
     }
 
@@ -169,16 +172,17 @@ public class Bloom extends TeamRobot {
         //goTo(getX()-75, getY()-75, 10, 0);
         if(event.isMyFault()) {
             back(30);
-            turnRight(30);
-            ahead(40);
+            setTurnRight(30);
+            setAhead(40);
+            setTurnRadarRight(360);
+            waitFor(new TurnCompleteCondition(this));
         }
     }
 
     @Override
     public void onHitWall(HitWallEvent event) {
         back(30);
-        turnRight(30);
-        ahead(40);
+        turnRight(180);
     }
 
     @Override
