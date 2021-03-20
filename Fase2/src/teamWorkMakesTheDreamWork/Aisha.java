@@ -19,6 +19,8 @@ public class Aisha extends TeamRobot {
     Tools t = new Tools();
     private ArrayList<String> teammates =  new ArrayList<>();
     private boolean dontFire=false;
+    private ArrayList< Double> lastHits= new ArrayList<>();
+    private boolean eventHappening=false;
 
     @Override
     public void run() {
@@ -91,8 +93,12 @@ public class Aisha extends TeamRobot {
 
     @Override
     public void onHitWall(HitWallEvent event) {
-        back(30);
+        eventHappening=true;
+        lastHits.add(event.getBearing()+getHeading());
         turnRight(180);
+        ahead(40);
+        waitFor(new MoveCompleteCondition(this));
+        eventHappening=false;
     }
 
     @Override
@@ -101,16 +107,25 @@ public class Aisha extends TeamRobot {
     }
     @Override
     public void onHitRobot(HitRobotEvent event) {
-        back(40);
+        System.out.println(lastHits);
+        eventHappening=true;
         if(isTeammate(event.getName().split(" ")[0])){
-            if(event.getBearing()>0){
-                turnRight(-(90-event.getBearing()));
-            }else{
-                turnRight(90-event.getBearing());
-            }
-            ahead(40);
-        }
+            lastHits.add(normalRelativeAngleDegrees(event.getBearing()+getHeading()));
 
+        double direction=0;
+        if(lastHits.size()>2){
+            for(Double d : lastHits)
+                direction+=(d/(double)lastHits.size());
+        }
+        turnRight(normalRelativeAngleDegrees(direction+180-getHeading()));
+        ahead(30);
+
+        }
+        else{
+            back(40);
+        }
+        waitFor(new MoveCompleteCondition(this));
+        eventHappening=false;
     }
 
     void goTo(double toX, double toY){
@@ -120,7 +135,8 @@ public class Aisha extends TeamRobot {
         goTo(p.getX(),p.getY(),0,0);
     }
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
-        while(targetPos!=null && (targetPos.getX()==toX && targetPos.getY()==toY) ) {
+        while(!eventHappening && targetPos!=null && (targetPos.getX()==toX && targetPos.getY()==toY) ) {
+
             double fromX = getX();
             double fromY = getY();
 
@@ -136,6 +152,8 @@ public class Aisha extends TeamRobot {
             if(!dontFire)
                 setFire(dist>300? 1 : (dist>100? 2 : 3));
             execute();
+            if(lastHits.size()>3)
+                lastHits= new ArrayList<>();
         }
     }
 

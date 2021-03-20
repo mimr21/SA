@@ -3,6 +3,7 @@ package teamWorkMakesTheDreamWork;
 import Utilities.AreWeThereYet;
 import Utilities.Point;
 import Utilities.Tools;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import robocode.*;
 
 
@@ -23,6 +24,8 @@ public class Bloom extends TeamRobot {
     private Point lastFire;
     private HashMap<String,Double> nmes= new HashMap<>();
     private int messageCounter=0;
+    private HashMap<String,Double> lastHits = new HashMap<>();
+    private boolean eventHappening=false;
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
@@ -169,20 +172,28 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onHitRobot(HitRobotEvent event) {
-        //goTo(getX()-75, getY()-75, 10, 0);
-        if(event.isMyFault()) {
-            back(30);
-            setTurnRight(30);
-            setAhead(40);
-            setTurnRadarRight(360);
-            waitFor(new TurnCompleteCondition(this));
-        }
+        eventHappening = true;
+            lastHits.put("Teammate",normalRelativeAngleDegrees(event.getBearing()+getHeading()));
+
+            double direction=0;
+            if(lastHits.size()>2){
+                for(Double d : lastHits.values())
+                    direction+=(d/(double)lastHits.size());
+            }
+            turnRight(normalRelativeAngleDegrees(direction+180-getHeading()));
+            ahead(30);
+
+        waitFor(new MoveCompleteCondition(this));
+        eventHappening = false;
     }
 
     @Override
     public void onHitWall(HitWallEvent event) {
+        eventHappening=true;
         back(30);
         turnRight(180);
+        waitFor(new TurnCompleteCondition(this));
+        eventHappening=false;
     }
 
     @Override
@@ -204,7 +215,13 @@ public class Bloom extends TeamRobot {
         goTo(p.getX(),p.getY(),0,0);
     }
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
-        while(t.euclidianDistance(getX(),getY(),toX,toY)>1) {
+        double distanceToCorner, lastDist=10000000;
+
+        while((distanceToCorner=t.euclidianDistance(getX(),getY(),toX,toY))>1) {
+            if (!eventHappening){
+                if(distanceToCorner<50 && Math.abs(lastDist-distanceToCorner)<3 )
+                    flee();
+
             double fromX = getX();
             double fromY = getY();
 
@@ -215,7 +232,8 @@ public class Bloom extends TeamRobot {
 
             turnRight(atan + shiftAngle);
             ahead(dist + shiftDistance);
-        }
+            lastDist=distanceToCorner;
+        }}
     }
 
 
