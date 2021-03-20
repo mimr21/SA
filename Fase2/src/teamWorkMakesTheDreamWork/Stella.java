@@ -15,6 +15,7 @@ public class Stella extends TeamRobot implements Droid{
     private Point myHome;
     private boolean inPlace=false;
     private boolean fireReady=false;
+    private boolean eventHappening = false;
     Tools t = new Tools();
 
     @Override
@@ -30,16 +31,17 @@ public class Stella extends TeamRobot implements Droid{
         for(int i=0;i<10;i++)
         System.out.println("Stella waiting");
         while (true){
-            if(myHome != null||myHome.equals(new Point(getX(),getY())))
-                goTo(myHome);
-
+            setDebugProperty("fireReady", String.valueOf(fireReady));
             if(fireReady)
                 fire(2);
+            if(!eventHappening)
+                goTo(myHome);
             doNothing();
         }
     }
 
     public void onMessageReceived(MessageEvent e) {
+        eventHappening=true;
         if(e.getMessage() instanceof Object[]){
             Object[] obj =(Object[]) e.getMessage();
             System.out.println("Received :"+ (String) obj[0]);
@@ -66,6 +68,7 @@ public class Stella extends TeamRobot implements Droid{
                     myHome = t.homeFromQuad(t.getMyQuad(myQuad), 150);
                     move();
                     inPlace=true;
+
                     break;
                 }
 
@@ -74,13 +77,14 @@ public class Stella extends TeamRobot implements Droid{
         else{
             System.out.println("404");
         }
-
+        eventHappening=false;
     }
 
     public void onHitRobot(HitRobotEvent e) {
-
+        eventHappening=true;
+            back(40);
+            waitFor(new MoveCompleteCondition(this));
             if(!inPlace) {
-                back(400);doNothing();
                 System.out.println("Going Back");
                 if ("teamWorkMakesTheDreamWork.Bloom".equals(e.getName().split(" ")[0])) {
                     if (e.getBearing() > 0) {
@@ -90,8 +94,9 @@ public class Stella extends TeamRobot implements Droid{
                     }
                     ahead(40);
                 }
+                goTo(myHome);
             }
-
+        eventHappening=false;
     }
 
     public void move(){
@@ -110,16 +115,19 @@ public class Stella extends TeamRobot implements Droid{
         goTo(p.getX(),p.getY(),0,0);
     }
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
+        while(!eventHappening && t.euclidianDistance(getX(),getY(),toX,toY)>1) {
             double fromX = getX();
             double fromY = getY();
+            System.out.println("GOTO");
+
             double dist = t.euclidianDistance(fromX, fromY, toX, toY);
             Point vec = new Point(toX - fromX, toY - fromY);
 
             double atan = (180 / Math.PI) * normalRelativeAngle(Math.atan2(vec.getX(), vec.getY()) - getHeadingRadians());
 
             turnRight(atan + shiftAngle);
-            System.out.println("BeforeGOTO");
             ahead(dist + shiftDistance);
+        }
 
     }
 

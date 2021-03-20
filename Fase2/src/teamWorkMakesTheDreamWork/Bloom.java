@@ -51,8 +51,6 @@ public class Bloom extends TeamRobot {
             turnRadarRight(50);
             orderAishas();
             setDebugProperty("isStellaDed", String.valueOf(noTanks));
-
-
         }
     }
 
@@ -102,41 +100,44 @@ public class Bloom extends TeamRobot {
         System.out.println("Move");
         Object[] msg = new Object[]{"Move", quad};
         try {
-            broadcastMessage(msg);
+            for(int i=0;i<7;i++)
+                broadcastMessage(msg);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void onScannedRobot(ScannedRobotEvent e) {
+        if(isTeammate(e.getName().split(" ")[0])){
         if(!moving && "teamWorkMakesTheDreamWork.Stella".equals(e.getName().split(" ")[0])){
             updateStella(myQuad);
             return;
-        }
-            nmes.put(e.getName(),e.getEnergy());
+        }}else {
+            nmes.put(e.getName(), e.getEnergy());
             double enemyBearing = getHeading() + e.getBearing();
             // Calculate enemy's position
             double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
             double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
             Point ppp = new Point(enemyX, enemyY);
-        if(!moving && !lastFire.equals(ppp)) {
-            lastFire=ppp;
-            Object[] msg = new Object[]{"Fire",ppp };
-            try {
-                broadcastMessage(msg);
-            } catch (IOException c) {
-                c.printStackTrace();
-            }
+            if (!moving) {
+                lastFire = ppp;
+                Object[] msg = new Object[]{"Fire", ppp};
+                try {
+                    broadcastMessage(msg);
+                } catch (IOException c) {
+                    c.printStackTrace();
+                }
 
                 double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
-                if (Math.abs( normalRelativeAngleDegrees(angle - getHeading())) > bound || noTanks) {
-                    setDebugProperty("AngleOffset", String.valueOf(Math.abs( normalRelativeAngleDegrees(angle - getHeading()))));
+                if (Math.abs(normalRelativeAngleDegrees(angle - getHeading())) > bound || noTanks) {
+                    setDebugProperty("AngleOffset", String.valueOf(Math.abs(normalRelativeAngleDegrees(angle - getHeading()))));
                     setDebugProperty("OffsetAllowed", String.valueOf(bound));
                     System.out.println("Shooting :" + e.getName());
                     turnGunRight(normalRelativeAngleDegrees(-getGunHeading() + angle));
                     fire(1);
                 }
             }
+        }
 
     }
 

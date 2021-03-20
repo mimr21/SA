@@ -115,7 +115,7 @@ public class Aisha extends TeamRobot {
         goTo(p.getX(),p.getY(),0,0);
     }
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
-        while(targetPos!=null && (targetPos.getX()==toX && targetPos.getY()==toY)) {
+        while(targetPos!=null && (targetPos.getX()==toX && targetPos.getY()==toY) ) {
             double fromX = getX();
             double fromY = getY();
 
