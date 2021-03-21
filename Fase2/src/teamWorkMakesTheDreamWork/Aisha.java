@@ -1,14 +1,11 @@
 package teamWorkMakesTheDreamWork;
 
-import Utilities.AreWeThereYet;
 import Utilities.Point;
 import Utilities.Tools;
-import Utilities.WallAlarm;
 import robocode.*;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import static robocode.util.Utils.normalRelativeAngle;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
@@ -22,10 +19,14 @@ public class Aisha extends TeamRobot {
     private boolean dontFire=false;
     private ArrayList< Double> lastHits= new ArrayList<>();
     private boolean eventHappening=false;
+    private boolean strongAndIndependent=false;
+
 
     @Override
     public void run() {
-        addCustomEvent(new WallAlarm("wallAlarm", this));
+        Color pink = new Color(195, 132, 212, 255);
+        Color green = new Color(121, 191, 106, 255);
+        setColors(pink, green, green);
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
         }
@@ -52,6 +53,12 @@ public class Aisha extends TeamRobot {
                     System.out.println("Kill :"+target);
                     break;
                 }
+                case "Death":{
+                    if(((String) obj[1] ).equals("Bloom")){
+                        strongAndIndependent=true;
+                        System.out.println("Bloom Ded");}
+                    break;
+                }
             }
         }
         else{
@@ -62,32 +69,29 @@ public class Aisha extends TeamRobot {
 
     @Override
     public void onScannedRobot(ScannedRobotEvent event) {
-
-        if(event.getName().equals(target)){
-            System.out.println("I see : "+event.getName());
-            double enemyBearing = getHeading() + event.getBearing();
-            // Calculate enemy's position
-            double enemyX = getX() + event.getDistance() * Math.sin(Math.toRadians(enemyBearing));
-            double enemyY = getY() + event.getDistance() * Math.cos(Math.toRadians(enemyBearing));
-            targetPos = new Point(enemyX,enemyY);
-
-            double angle = t.getAngle(targetPos, new Point(getX(), getY()), 0.0);
-            turnGunRight(normalRelativeAngleDegrees(-getGunHeading() + angle));
-            fire(1);
-            turnGunRight(getGunHeading());
-            dontFire=false;
-        }
-
         if(isTeammate(event.getName())){
             dontFire = true;
-
             if(event.getDistance()<60){
                 System.out.println("Avoiding Teammate");
                 back(30);
                 turnRight(30);
                 ahead(40);
             }
-        }
+        }else if((strongAndIndependent && (targetPos==null || target==null)) ||
+                    event.getName().equals(target)){
+                double enemyBearing = getHeading() + event.getBearing();
+                // Calculate enemy's position
+                double enemyX = getX() + event.getDistance() * Math.sin(Math.toRadians(enemyBearing));
+                double enemyY = getY() + event.getDistance() * Math.cos(Math.toRadians(enemyBearing));
+
+                System.out.println("I see : "+event.getName());
+                targetPos = new Point(enemyX,enemyY);
+                turnGunRight(normalRelativeAngleDegrees(-getGunHeading() + enemyBearing));
+                fire(1);
+                //turnGunRight(-getGunHeading());
+                dontFire=false;
+            }
+
     }
 
     @Override
@@ -153,12 +157,12 @@ public class Aisha extends TeamRobot {
             double atan = (180 / Math.PI) * normalRelativeAngle(Math.atan2(vec.getX(), vec.getY()) - getHeadingRadians());
 
             turnRight(atan + shiftAngle);
-            turnRadarRight(-getRadarHeading()+getHeading());
-            setTurnRadarRight(360);
+            //turnRadarRight(-getRadarHeading()+getHeading());
+            setTurnRadarRight(3600000);
             setAhead(dist + shiftDistance);
             if(!dontFire)
                 setFire(dist>300? 1 : (dist>100? 2 : 3));
-            execute();
+            waitFor(new MoveCompleteCondition(this));
             if(lastHits.size()>3)
                 lastHits= new ArrayList<>();
         }

@@ -1,6 +1,5 @@
 package teamWorkMakesTheDreamWork;
 
-import Utilities.AreWeThereYet;
 import Utilities.Dying;
 import Utilities.Point;
 import Utilities.Tools;
@@ -25,6 +24,10 @@ public class Stella extends TeamRobot implements Droid{
 
     @Override
     public void run() {
+        Color pink = new Color(195, 132, 212, 255);
+
+        Color orange = new Color(255, 148, 32, 255);
+        setColors(pink, orange, orange);
         addCustomEvent(new Dying("isDying", this));
         if(t.getBattleFieldDimensions().getX()!= getBattleFieldWidth())
             t.setDimensions(getBattleFieldWidth(), getBattleFieldHeight());
@@ -37,7 +40,7 @@ public class Stella extends TeamRobot implements Droid{
         for(int i=0;i<10;i++)
         System.out.println("Stella waiting");
         while (true){
-            if(goCrazy && "https://www.youtube.com/watch?v=lioVbj-EKms".length()>0){
+            if(goCrazy){
                 while (Tools.euclidianDistance(getX(),getY(),myHome.getX(),myHome.getY())>1)
                     goTo();
                 waitFor(new MoveCompleteCondition(this));
@@ -74,9 +77,6 @@ public class Stella extends TeamRobot implements Droid{
                     double dy = p.getY() - this.getY();
                     // Calculate angle to target
                     double theta = Math.toDegrees(Math.atan2(dx, dy));
-
-                    // Turn gun to target
-                    double angle = t.getAngle(p, new Point(getX(), getY()), 0.0);
                     turnGunRight(normalRelativeAngleDegrees(theta - getGunHeading()));
                     fireReady=true;
                     //double angle = e.getBearing()-getGunHeading()+getHeading();
@@ -93,11 +93,12 @@ public class Stella extends TeamRobot implements Droid{
 
                     break;
                 }
-                case "Death":
+                case "Death":{
                     if(((String) obj[1] ).equals("Bloom")){
                         goCrazy=true;
                         System.out.println("Bloom Ded");}
                     break;
+                }
 
             }
         }

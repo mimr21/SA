@@ -4,10 +4,10 @@ import Utilities.AreWeThereYet;
 import Utilities.Dying;
 import Utilities.Point;
 import Utilities.Tools;
-import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import robocode.*;
 
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 
@@ -30,6 +30,9 @@ public class Bloom extends TeamRobot {
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
+        Color pink = new Color(195, 132, 212, 255);
+        Color blue = new Color(82, 188, 220, 255);
+        setColors(pink, blue, blue);
         addCustomEvent(new Dying("isDying",this));
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
@@ -182,9 +185,13 @@ public class Bloom extends TeamRobot {
             if(lastHits.size()>2){
                 for(Double d : lastHits.values())
                     direction+=(d/(double)lastHits.size());
+                turnRight(normalRelativeAngleDegrees(direction+180-getHeading()));
+                ahead(50);
+            }else{
+                back(30);
+                turnRight((new Random().nextBoolean()?1:-1) *90);
+                ahead(50);
             }
-            turnRight(normalRelativeAngleDegrees(direction+180-getHeading()));
-            ahead(30);
 
         waitFor(new MoveCompleteCondition(this));
         eventHappening = false;

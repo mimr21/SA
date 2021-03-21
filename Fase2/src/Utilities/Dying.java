@@ -2,7 +2,6 @@ package Utilities;
 
 import robocode.Condition;
 import robocode.Robot;
-import robocode.Rules;
 
 public class Dying extends Condition {
     private Robot r;
