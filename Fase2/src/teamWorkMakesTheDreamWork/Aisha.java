@@ -3,6 +3,7 @@ package teamWorkMakesTheDreamWork;
 import Utilities.AreWeThereYet;
 import Utilities.Point;
 import Utilities.Tools;
+import Utilities.WallAlarm;
 import robocode.*;
 
 import java.awt.*;
@@ -24,6 +25,7 @@ public class Aisha extends TeamRobot {
 
     @Override
     public void run() {
+        addCustomEvent(new WallAlarm("wallAlarm", this));
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
         }
@@ -68,6 +70,11 @@ public class Aisha extends TeamRobot {
             double enemyX = getX() + event.getDistance() * Math.sin(Math.toRadians(enemyBearing));
             double enemyY = getY() + event.getDistance() * Math.cos(Math.toRadians(enemyBearing));
             targetPos = new Point(enemyX,enemyY);
+
+            double angle = t.getAngle(targetPos, new Point(getX(), getY()), 0.0);
+            turnGunRight(normalRelativeAngleDegrees(-getGunHeading() + angle));
+            fire(1);
+            turnGunRight(getGunHeading());
             dontFire=false;
         }
 
@@ -156,7 +163,6 @@ public class Aisha extends TeamRobot {
                 lastHits= new ArrayList<>();
         }
     }
-
 
 
 }

@@ -1,6 +1,7 @@
 package teamWorkMakesTheDreamWork;
 
 import Utilities.AreWeThereYet;
+import Utilities.Dying;
 import Utilities.Point;
 import Utilities.Tools;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -29,7 +30,7 @@ public class Bloom extends TeamRobot {
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
-
+        addCustomEvent(new Dying("isDying",this));
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
         }
@@ -77,7 +78,7 @@ public class Bloom extends TeamRobot {
     }
 
     private Point flee() {
-        moving=true;
+
         Point p = t.getBattleFieldDimensions();
         boolean goLeft = new Random().nextBoolean();
         if(goLeft)
@@ -88,12 +89,14 @@ public class Bloom extends TeamRobot {
         updateStella(myQuad);
         myHome = t.homeFromQuad(t.getMyQuad(myQuad), 36);
 
-
+        moving=true;
         doNothing();
         goTo(myHome);
+        updateStella(myQuad);
         double center= t.getAngle(new Point(p.getX()/2,p.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
         waitFor(new AreWeThereYet(this,myHome));
+        updateStella(myQuad);
         turnGunRight(-getGunHeading()+getHeading());
         moving=false;
 
@@ -202,8 +205,9 @@ public class Bloom extends TeamRobot {
 
         switch ((String) msg[0]){
             case "Death":
-                noTanks=true;
-                System.out.println("Stella Ded");
+                if(((String) msg[1] ).equals("Stella")){
+                    noTanks=true;
+                    System.out.println("Stella Ded");}
                 break;
         }
     }
@@ -219,8 +223,10 @@ public class Bloom extends TeamRobot {
 
         while((distanceToCorner=t.euclidianDistance(getX(),getY(),toX,toY))>1) {
             if (!eventHappening){
-                if(distanceToCorner<50 && Math.abs(lastDist-distanceToCorner)<3 )
+                if(distanceToCorner<50 && Math.abs(lastDist-distanceToCorner)<30 ){
+                    System.out.println("Corner occupied");
                     flee();
+                }
 
             double fromX = getX();
             double fromY = getY();
@@ -234,6 +240,27 @@ public class Bloom extends TeamRobot {
             ahead(dist + shiftDistance);
             lastDist=distanceToCorner;
         }}
+    }
+
+
+    @Override
+    public void onCustomEvent(CustomEvent event) {
+        eventHappening=true;
+        Condition c = event.getCondition();
+        String cname = c.getName();
+        if(cname.equals("isDying")){
+            Dying d = (Dying) c;
+            if(c.test()){
+                System.out.println("BLOOM DEAD");
+                try {
+                    broadcastMessage(new Object[]{"Death", "Bloom"});
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
+        eventHappening=false;
     }
 
 
