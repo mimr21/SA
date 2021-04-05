@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="robocodeCoreLibs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/bcel-6.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/codesize-1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/picocontainer-2.14.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/robocode.battle-1.9.3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/robocode.core-1.9.3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/robocode.host-1.9.3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/robocode.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/robocode.repository-1.9.3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/robocode.sound-1.9.3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/robocode.ui-1.9.3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/robocode.ui.editor-1.9.3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/roborumble.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../robocodeCoreLibs/StandardOdometer.jar!/" />
+      <root url="file://$PROJECT_DIR$/../robocodeCoreLibs" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+    <jarDirectory url="file://$PROJECT_DIR$/../robocodeCoreLibs" recursive="false" />
+  </library>
+</component>
