@@ -1,11 +1,13 @@
 package teamWorkMakesTheDreamWork;
 
 import Utilities.AreWeThereYet;
+import Utilities.Dying;
 import Utilities.Point;
 import Utilities.Tools;
 import robocode.*;
 
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 
@@ -17,16 +19,21 @@ public class Bloom extends TeamRobot {
     private Point myHome;
     private Tools t = new Tools();
     private ArrayList<String> teammates = new ArrayList<>();
-    private boolean moving;
+    private boolean moving=true;
     private double bound;
     private boolean noTanks=false;
+    private Point lastFire;
     private HashMap<String,Double> nmes= new HashMap<>();
+    private int messageCounter=0;
+    private HashMap<String,Double> lastHits = new HashMap<>();
+    private boolean eventHappening=false;
 
     //All:[teamWorkMakesTheDreamWork.Bloom* (1), teamWorkMakesTheDreamWork.Stella* (1)]
     public void run() {
-        double r = Math.ceil(Math.sqrt(2*Math.pow(45,2)));
-        Point to = t.homeFromQuad(t.getMyQuad(myQuad),150);
-        bound = Math.toDegrees(Math.asin(r/t.euclidianDistance(getX(),getY(),to.getX(),to.getY())));
+        Color pink = new Color(195, 132, 212, 255);
+        Color blue = new Color(82, 188, 220, 255);
+        setColors(pink, blue, blue);
+        addCustomEvent(new Dying("isDying",this));
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
         }
@@ -37,6 +44,11 @@ public class Bloom extends TeamRobot {
         Point myCorner= new Point(xx,yy);
         myHome = t.homeFromQuad(myCorner,36);
         myQuad = t.getMyQuad(myCorner);
+        double r = Math.ceil(Math.sqrt(2*Math.pow(35,2)));
+        Point to = t.homeFromQuad(t.getMyQuad(myQuad),150);
+        Point from = t.homeFromQuad(t.getMyQuad(myQuad),36);
+        bound = Math.toDegrees(Math.asin(r/t.euclidianDistance(from.getX(),from.getY(),to.getX(),to.getY())));
+        updateStella(myQuad);
         turnRadarRight(360);
         orderAishas();
         flee();
@@ -46,8 +58,7 @@ public class Bloom extends TeamRobot {
             turnRadarRight(-100);
             turnRadarRight(50);
             orderAishas();
-
-
+            setDebugProperty("isStellaDed", String.valueOf(noTanks));
         }
     }
 
@@ -70,7 +81,7 @@ public class Bloom extends TeamRobot {
     }
 
     private Point flee() {
-        moving=true;
+
         Point p = t.getBattleFieldDimensions();
         boolean goLeft = new Random().nextBoolean();
         if(goLeft)
@@ -78,50 +89,70 @@ public class Bloom extends TeamRobot {
         else
             myQuad=(myQuad+1)%4;
 
+        updateStella(myQuad);
         myHome = t.homeFromQuad(t.getMyQuad(myQuad), 36);
 
-        updateStella(myQuad);
-
+        moving=true;
+        doNothing();
         goTo(myHome);
+        updateStella(myQuad);
         double center= t.getAngle(new Point(p.getX()/2,p.getY()/2),new Point(getX(),getY()), getHeadingRadians());
         turnRight(center);
         waitFor(new AreWeThereYet(this,myHome));
+        updateStella(myQuad);
         turnGunRight(-getGunHeading()+getHeading());
         moving=false;
+
         return myHome;
     }
 
     private void updateStella(int quad){
         System.out.println("Move");
-        Object[] msg = new Object[]{"Move", quad};
         try {
-            broadcastMessage(msg);
+
+                broadcastMessage(new Object[]{"Move", quad ,messageCounter });
+                messageCounter++;
+            setDebugProperty("messageCounter", String.valueOf(messageCounter));
+
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void onScannedRobot(ScannedRobotEvent e) {
-        if(isTeammate(e.getName().split(" ")[0]))
+        if(isTeammate(e.getName().split(" ")[0])){
+        if(!moving && "teamWorkMakesTheDreamWork.Stella".equals(e.getName().split(" ")[0])){
+            updateStella(myQuad);
             return;
-            nmes.put(e.getName(),e.getEnergy());
+        }}else {
+            nmes.put(e.getName(), e.getEnergy());
             double enemyBearing = getHeading() + e.getBearing();
             // Calculate enemy's position
             double enemyX = getX() + e.getDistance() * Math.sin(Math.toRadians(enemyBearing));
             double enemyY = getY() + e.getDistance() * Math.cos(Math.toRadians(enemyBearing));
+            Point ppp = new Point(enemyX, enemyY);
+            if (!moving) {
+                lastFire = ppp;
+                Object[] msg = new Object[]{"Fire", ppp};
+                try {
+                    broadcastMessage(msg);
+                } catch (IOException c) {
+                    c.printStackTrace();
+                }
 
-            Object[] msg = new Object[]{"Fire", new Point(enemyX, enemyY)};
-            try {
-                broadcastMessage(msg);
-            } catch (IOException c) {
-                c.printStackTrace();
+                double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
+                if (Math.abs(normalRelativeAngleDegrees(angle - getHeading())) > bound || noTanks) {
+                    setDebugProperty("AngleOffset", String.valueOf(Math.abs(normalRelativeAngleDegrees(angle - getHeading()))));
+                    setDebugProperty("OffsetAllowed", String.valueOf(bound));
+                    System.out.println("Shooting :" + e.getName());
+                    turnGunRight(normalRelativeAngleDegrees(-getGunHeading() + angle));
+                    fire(1);
+                    waitFor(new GunTurnCompleteCondition(this));
+                }
             }
-            double angle = t.getAngle(new Point(enemyX, enemyY), new Point(getX(), getY()), 0.0);
-            if(Math.abs(angle-getHeading())>bound || noTanks){
-                System.out.println("Shooting :"+ e.getName());
-                turnGunRight(normalRelativeAngleDegrees(-getGunHeading()+angle));
-                fire(1);
-            }
+        }
 
     }
 
@@ -132,8 +163,10 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onHitByBullet(HitByBulletEvent event) {
-        if(!moving)
-        flee();
+        if(!moving){
+            flee();
+            System.out.println("Moving");
+        }
     }
 
     @Override
@@ -145,26 +178,44 @@ public class Bloom extends TeamRobot {
 
     @Override
     public void onHitRobot(HitRobotEvent event) {
-        //goTo(getX()-75, getY()-75, 10, 0);
-        if(event.isMyFault()) {
-            back(30);
-            turnRight(30);
-            ahead(40);
-        }
+        eventHappening = true;
+            lastHits.put("Teammate",normalRelativeAngleDegrees(event.getBearing()+getHeading()));
+
+            double direction=0;
+            if(lastHits.size()>2){
+                for(Double d : lastHits.values())
+                    direction+=(d/(double)lastHits.size());
+                turnRight(normalRelativeAngleDegrees(direction+180-getHeading()));
+                ahead(50);
+            }else{
+                back(30);
+                turnRight((new Random().nextBoolean()?1:-1) *90);
+                ahead(50);
+            }
+
+        waitFor(new MoveCompleteCondition(this));
+        eventHappening = false;
     }
 
     @Override
     public void onHitWall(HitWallEvent event) {
+        eventHappening=true;
         back(30);
-        turnRight(30);
-        ahead(40);
+        turnRight(180);
+        waitFor(new TurnCompleteCondition(this));
+        eventHappening=false;
     }
 
     @Override
     public void onMessageReceived(MessageEvent event) {
         Object[] msg =(Object[]) event.getMessage();
+
         switch ((String) msg[0]){
-            case "Death": noTanks=true;
+            case "Death":
+                if(((String) msg[1] ).equals("Stella")){
+                    noTanks=true;
+                    System.out.println("Stella Ded");}
+                break;
         }
     }
 
@@ -175,7 +226,15 @@ public class Bloom extends TeamRobot {
         goTo(p.getX(),p.getY(),0,0);
     }
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
-        while(t.euclidianDistance(getX(),getY(),toX,toY)>1) {
+        double distanceToCorner, lastDist=10000000;
+
+        while((distanceToCorner=t.euclidianDistance(getX(),getY(),toX,toY))>1) {
+            if (!eventHappening){
+                if(distanceToCorner<50 && Math.abs(lastDist-distanceToCorner)<30 ){
+                    System.out.println("Corner occupied");
+                    flee();
+                }
+
             double fromX = getX();
             double fromY = getY();
 
@@ -186,7 +245,29 @@ public class Bloom extends TeamRobot {
 
             turnRight(atan + shiftAngle);
             ahead(dist + shiftDistance);
+            lastDist=distanceToCorner;
+        }}
+    }
+
+
+    @Override
+    public void onCustomEvent(CustomEvent event) {
+        eventHappening=true;
+        Condition c = event.getCondition();
+        String cname = c.getName();
+        if(cname.equals("isDying")){
+            Dying d = (Dying) c;
+            if(c.test()){
+                System.out.println("BLOOM DEAD");
+                try {
+                    broadcastMessage(new Object[]{"Death", "Bloom"});
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
         }
+        eventHappening=false;
     }
 
 

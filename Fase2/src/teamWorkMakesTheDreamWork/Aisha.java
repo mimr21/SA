@@ -1,13 +1,11 @@
 package teamWorkMakesTheDreamWork;
 
-import Utilities.AreWeThereYet;
 import Utilities.Point;
 import Utilities.Tools;
 import robocode.*;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import static robocode.util.Utils.normalRelativeAngle;
 import static robocode.util.Utils.normalRelativeAngleDegrees;
@@ -18,9 +16,17 @@ public class Aisha extends TeamRobot {
     private Point targetPos;
     Tools t = new Tools();
     private ArrayList<String> teammates =  new ArrayList<>();
+    private boolean dontFire=false;
+    private ArrayList< Double> lastHits= new ArrayList<>();
+    private boolean eventHappening=false;
+    private boolean strongAndIndependent=false;
+
 
     @Override
     public void run() {
+        Color pink = new Color(195, 132, 212, 255);
+        Color green = new Color(121, 191, 106, 255);
+        setColors(pink, green, green);
         for(String s : getTeammates()){
             teammates.add(s.split(" ")[0]);
         }
@@ -47,6 +53,12 @@ public class Aisha extends TeamRobot {
                     System.out.println("Kill :"+target);
                     break;
                 }
+                case "Death":{
+                    if(((String) obj[1] ).equals("Bloom")){
+                        strongAndIndependent=true;
+                        System.out.println("Bloom Ded");}
+                    break;
+                }
             }
         }
         else{
@@ -57,22 +69,29 @@ public class Aisha extends TeamRobot {
 
     @Override
     public void onScannedRobot(ScannedRobotEvent event) {
-
-        if(event.getName().equals(target)){
-            System.out.println("I see : "+event.getName());
-            double enemyBearing = getHeading() + event.getBearing();
-            // Calculate enemy's position
-            double enemyX = getX() + event.getDistance() * Math.sin(Math.toRadians(enemyBearing));
-            double enemyY = getY() + event.getDistance() * Math.cos(Math.toRadians(enemyBearing));
-            targetPos = new Point(enemyX,enemyY);
-        }
         if(isTeammate(event.getName())){
-            if(event.getDistance()<10){
+            dontFire = true;
+            if(event.getDistance()<60){
+                System.out.println("Avoiding Teammate");
                 back(30);
                 turnRight(30);
                 ahead(40);
             }
-        }
+        }else if((strongAndIndependent && (targetPos==null || target==null)) ||
+                    event.getName().equals(target)){
+                double enemyBearing = getHeading() + event.getBearing();
+                // Calculate enemy's position
+                double enemyX = getX() + event.getDistance() * Math.sin(Math.toRadians(enemyBearing));
+                double enemyY = getY() + event.getDistance() * Math.cos(Math.toRadians(enemyBearing));
+
+                System.out.println("I see : "+event.getName());
+                targetPos = new Point(enemyX,enemyY);
+                turnGunRight(normalRelativeAngleDegrees(-getGunHeading() + enemyBearing));
+                fire(1);
+                //turnGunRight(-getGunHeading());
+                dontFire=false;
+            }
+
     }
 
     @Override
@@ -85,9 +104,12 @@ public class Aisha extends TeamRobot {
 
     @Override
     public void onHitWall(HitWallEvent event) {
-        back(30);
-        turnRight(30);
+        eventHappening=true;
+        lastHits.add(event.getBearing()+getHeading());
+        turnRight(180);
         ahead(40);
+        waitFor(new MoveCompleteCondition(this));
+        eventHappening=false;
     }
 
     @Override
@@ -96,16 +118,25 @@ public class Aisha extends TeamRobot {
     }
     @Override
     public void onHitRobot(HitRobotEvent event) {
-        back(40);
+        System.out.println(lastHits);
+        eventHappening=true;
         if(isTeammate(event.getName().split(" ")[0])){
-            if(event.getBearing()>0){
-                turnRight(-(90-event.getBearing()));
-            }else{
-                turnRight(90-event.getBearing());
-            }
-            ahead(40);
-        }
+            lastHits.add(normalRelativeAngleDegrees(event.getBearing()+getHeading()));
 
+        double direction=0;
+        if(lastHits.size()>2){
+            for(Double d : lastHits)
+                direction+=(d/(double)lastHits.size());
+        }
+        turnRight(normalRelativeAngleDegrees(direction+180-getHeading()));
+        ahead(30);
+
+        }
+        else{
+            back(40);
+        }
+        waitFor(new MoveCompleteCondition(this));
+        eventHappening=false;
     }
 
     void goTo(double toX, double toY){
@@ -115,7 +146,8 @@ public class Aisha extends TeamRobot {
         goTo(p.getX(),p.getY(),0,0);
     }
     void goTo(double toX, double toY, double shiftAngle, double shiftDistance){
-        while(targetPos!=null && (targetPos.getX()==toX && targetPos.getY()==toY)) {
+        while(!eventHappening && targetPos!=null && (targetPos.getX()==toX && targetPos.getY()==toY) ) {
+
             double fromX = getX();
             double fromY = getY();
 
@@ -125,14 +157,16 @@ public class Aisha extends TeamRobot {
             double atan = (180 / Math.PI) * normalRelativeAngle(Math.atan2(vec.getX(), vec.getY()) - getHeadingRadians());
 
             turnRight(atan + shiftAngle);
-            turnRadarRight(-getRadarHeading()+getHeading());
-            setTurnRadarRight(360);
+            //turnRadarRight(-getRadarHeading()+getHeading());
+            setTurnRadarRight(3600000);
             setAhead(dist + shiftDistance);
-            setFire(2);
-            execute();
+            if(!dontFire)
+                setFire(dist>300? 1 : (dist>100? 2 : 3));
+            waitFor(new MoveCompleteCondition(this));
+            if(lastHits.size()>3)
+                lastHits= new ArrayList<>();
         }
     }
-
 
 
 }
